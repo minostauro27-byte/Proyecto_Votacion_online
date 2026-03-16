@@ -47,3 +47,39 @@ class RegistroAPIView(APIView):
             return Response({"mensaje": "Usuario registrado", "uid": user.uid}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LoginApiView(APIView):
+    authentication_classes = [] # Asegurar que no pida auth previa
+    permission_classes = [AllowAny] # <-- CAMBIO CLAVE: Permite acceso público
+
+    @extend_schema(
+        summary="Login de usuario",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'email': {'type': 'string'},
+                    'password': {'type': 'string'}
+                }
+            }
+        }
+    )
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        api_key = os.getenv('FIREBASE_WEB_API_KEY')
+
+        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
+        payload = {"email": email, "password": password, "returnSecureToken": True}
+
+        try:
+            response = requests.post(url, json=payload)
+            data = response.json()
+            if response.status_code == 200:
+                return Response({"token": data['idToken'], "uid": data['localId']}, status=status.HTTP_200_OK)
+            # Retornamos el error real para depurar
+            return Response({"error": data.get('error', {}).get('message', 'Error desconocido')}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"error": "Fallo técnico"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
