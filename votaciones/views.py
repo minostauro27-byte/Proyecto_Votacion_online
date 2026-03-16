@@ -48,3 +48,32 @@ class VotacionAPIView(APIView):
             return Response({"rol": rol_usuario, "datos": votos}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"Error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @extend_schema(
+        summary="Emitir voto",
+        description="Emitir un nuevo voto",
+        request=VotoSerializer,
+        responses={201: {"mensaje": "Voto registrado exitosamente", "id": "string"}}
+    )
+    def post(self, request):
+        """
+        Emitir un nuevo voto
+        """
+        serializer = VotoSerializer(data=request.data)
+
+        if serializer.is_valid():
+            datos_validados = serializer.validated_data
+            datos_validados['usuario_id'] = request.user.uid
+            datos_validados['fecha_voto'] = firestore.SERVER_TIMESTAMP
+
+            try:
+                # Guardar el voto en la colección 'api_votos'
+                nuevo_voto = db.collection('api_votos').add(datos_validados)
+                return Response({
+                    "mensaje": "Voto registrado exitosamente", 
+                    "id": nuevo_voto[1].id
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({"Error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
