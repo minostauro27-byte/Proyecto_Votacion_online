@@ -41,8 +41,6 @@ def registrar_voto(candidato: str, mesa_id: str = "MESA-05", comentario: str = "
         "Content-Type": "application/json"
     }
     
-    # IMPORTANTE: Cambiamos la clave 'candidato' por 'candidato_id'
-    # para que coincida con tu estructura de Firestore.
     payload = {
         "candidato_id": candidato, 
         "mesa_id": mesa_id,
@@ -70,7 +68,6 @@ if token:
         user_input = input("\nTú: ")
         if user_input.lower() in ['salir', 'exit', 'bye']: break
 
-        # Instrucción clara para que la IA sepa qué herramienta usar
         prompt = (
             f"Eres un asistente de votaciones. Tienes dos herramientas: consultar_votos y registrar_voto.\n"
             f"Si el usuario quiere votar, usa registrar_voto(candidato='NOMBRE'). "
@@ -81,7 +78,6 @@ if token:
         )
 
         try:
-            # Aquí le pasamos ambas herramientas a la IA
             response = client.models.generate_content(
                 model=modelo_id,
                 contents=prompt,
