@@ -54,7 +54,7 @@ def registrar_voto(candidato: str, mesa_id: str = "MESA-05", comentario: str = "
         return {"error": str(e)}
 
 # --- 3. CONFIGURACIÓN IA ---
-API_KEY = "AIzaSyD6D0yPcsdI0-5v3O7Ee64N8fYn1BSL__M"
+API_KEY = "Aqui va el api key"
 client = genai.Client(api_key=API_KEY)
 modelo_id = "gemini-2.5-flash"
 
