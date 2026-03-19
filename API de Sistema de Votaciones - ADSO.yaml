@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: API de Sistema de Votaciones - ADSO
+  version: 1.0.0
+  description: Autenticación con Firebase y gestión de votos.
+paths:
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      summary: Login de usuario
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/registro/:
+    post:
+      operationId: auth_registro_create
+      summary: Registro de usuario
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/perfil/foto/:
+    post:
+      operationId: perfil_foto_create
+      summary: Actualizar foto de perfil
+      tags:
+      - perfil
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                imagen:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: No response body
+  /api/votos/:
+    get:
+      operationId: votos_list
+      description: Listar votos (Administrador ve todos, Votante ve solo los suyos)
+      summary: Listar votos
+      tags:
+      - votos
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Voto'
+          description: ''
+    post:
+      operationId: votos_create
+      description: Emitir un nuevo voto
+      summary: Emitir voto
+      tags:
+      - votos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Voto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Voto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Voto'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                mensaje: Voto registrado exitosamente
+                id: string
+          description: ''
+components:
+  schemas:
+    Voto:
+      type: object
+      description: Validar los datos del voto antes de guardarlos en Firestore
+      properties:
+        candidato_id:
+          type: string
+          maxLength: 50
+        mesa_id:
+          type: string
+          maxLength: 20
+        comentario:
+          type: string
+      required:
+      - candidato_id
+      - mesa_id
