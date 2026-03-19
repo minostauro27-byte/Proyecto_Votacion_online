@@ -3,21 +3,19 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny # Importar esto
-from django.views.decorators.csrf import csrf_exempt # Importar esto
-from django.utils.decorators import method_decorator # Importar esto
+from rest_framework.permissions import AllowAny 
+from django.views.decorators.csrf import csrf_exempt 
+from django.utils.decorators import method_decorator  
 from firebase_admin import auth, firestore
 from votacion.firebase_config import initialize_firebase 
-from drf_spectacular.utils import extend_schema # Añadido
+from drf_spectacular.utils import extend_schema  
 
 db = initialize_firebase()
-
-# RegistroAPIView ya estaba bien (tenía los permisos vacíos), 
-# pero le añadiremos csrf_exempt por seguridad extra
+ 
 @method_decorator(csrf_exempt, name='dispatch')
 class RegistroAPIView(APIView):
     authentication_classes = []
-    permission_classes = [AllowAny] # Recomendado
+    permission_classes = [AllowAny]  
 
     @extend_schema(
         summary="Registro de usuario",
@@ -32,7 +30,7 @@ class RegistroAPIView(APIView):
         }
     )
     def post(self, request):
-        # ... (tu código se mantiene igual)
+        
         email = request.data.get('email')
         password = request.data.get('password')
         if not email or not password:
@@ -51,8 +49,8 @@ class RegistroAPIView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginApiView(APIView):
-    authentication_classes = [] # Asegurar que no pida auth previa
-    permission_classes = [AllowAny] # <-- CAMBIO CLAVE: Permite acceso público
+    authentication_classes = []  
+    permission_classes = [AllowAny]  
 
     @extend_schema(
         summary="Login de usuario",
@@ -79,7 +77,7 @@ class LoginApiView(APIView):
             data = response.json()
             if response.status_code == 200:
                 return Response({"token": data['idToken'], "uid": data['localId']}, status=status.HTTP_200_OK)
-            # Retornamos el error real para depurar
+            
             return Response({"error": data.get('error', {}).get('message', 'Error desconocido')}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             return Response({"error": "Fallo técnico"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
