@@ -13,4 +13,12 @@ from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'votacion.settings')
 
-application = get_asgi_application()
+#Permitir peticiones http
+
+django_asgi_app = get_asgi_application()
+
+#Permitir canales y websockets
+
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import 
+from channels
