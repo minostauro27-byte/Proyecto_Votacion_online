@@ -78,7 +78,7 @@ funciones_crud = {
 
 # --- 3. CONFIGURACIÓN IA ---
 
-API_KEY = "aqui_va_api_key" 
+API_KEY = "aqui_va_la_api" 
 client = genai.Client(api_key=API_KEY)
 modelo_id = "gemini-2.0-flash" 
 

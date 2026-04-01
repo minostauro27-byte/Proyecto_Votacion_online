@@ -4,6 +4,7 @@ class VotoSerializer(serializers.Serializer):
     """
     Validar los datos del voto antes de guardarlos en Firestore
     """
+    candidato = serializers.CharField(max_length=100)
     candidato_id = serializers.CharField(max_length=50)
     mesa_id = serializers.CharField(max_length=20)
     comentario = serializers.CharField(required=False, allow_blank=True)

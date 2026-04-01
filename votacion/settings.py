@@ -71,7 +71,7 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = 'votacion.asgi.py'
+ASGI_APPLICATION = 'votacion.asgi.application'
 
 
 # Database
