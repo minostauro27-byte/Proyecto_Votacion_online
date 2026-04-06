@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-skmyd)bu2=c8swmf*ke$n$y-3nkbb!)y@qzt80c6iws96s(jpj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -150,3 +150,4 @@ CHANNEL_LAYERS = {
         "BACKEND" : "channels.layers.InMemoryChannelLayer"
     }
 }
+

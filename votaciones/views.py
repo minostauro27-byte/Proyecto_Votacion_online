@@ -128,3 +128,43 @@ class VotacionAPIView(APIView):
 # Vista para el monitor (Asegúrate que el nombre coincida en urls.py)
 def Monitor_view(request):
     return render(request, 'prueba_final.html')
+
+class EstaditicasAPIView(APIView):
+    authentication_classes = [FirebaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Calcular el resumen de votos para mostrar en el frontend
+        """
+        rol = request.user.rol
+        uid = request.user.uid
+
+        #1.filtrar las tareas
+        if rol == 'admin':
+            docs = db.collection('api_votos').stream()
+        else:
+            docs = db.collection('api_votos').where('usuario_id', '==', uid).stream()
+
+        # 2.inicializar las variables
+        total = 0
+        completadas = 0
+        en_proceso = 0
+        pendientes = 0
+
+        #3. procesar los datos
+        for doc in docs:
+            total +=1
+            data = doc.to_dict()
+            estado = data.get('estado', 'pendiente').lower()
+
+            if 'completada' in estado or 'terminada' in estado:
+                completadas +=1
+            elif 'proceso' in estado:
+                en_proceso +=1
+            else:
+                pendientes +=1
+
+        #4.Calcular el porcentaje
+        if total > 0:
+            porcentaje = int((completadas / total) * 100)

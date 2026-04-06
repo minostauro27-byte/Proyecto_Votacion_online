@@ -6,55 +6,44 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
-        
-        /* Layout */
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
         .sidebar { width: 350px; background: var(--card); border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
         .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        
-        /* Componentes */
-        .card { background: var(--card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 20px; margin-bottom: 20px; }
-        h3 { margin-top: 0; color: #1e293b; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
-        
-        /* Chat y Feed */
-        #feed-votos, #mensajes-chat { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; }
-        .voto-item { padding: 10px; border-bottom: 1px solid #f1f5f9; animation: slideIn 0.3s ease; }
-        .voto-item b { color: var(--primary); }
-        
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        
-        /* Inputs */
-        .input-group { padding: 20px; border-top: 1px solid #e2e8f0; }
-        input { width: 80%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 10px; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .card { background: var(--card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        #feed-votos, #mensajes-chat { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; font-size: 0.9em; }
+        .voto-item { padding: 8px; border-bottom: 1px solid #f1f5f9; animation: slideIn 0.3s ease; }
+        .input-group { padding: 20px; border-top: 1px solid #e2e8f0; background: #fff; }
+        input { width: 90%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 8px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column;">
-            <h3>💬 Chat & Actividad</h3>
-            <div style="height: 50%; overflow-y: auto;">
-                <small>MENSAJES</small>
+        <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <h3>💬 Panel de Control</h3>
+            <div style="height: 50%; overflow-y: auto; border-bottom: 2px solid #eee;">
+                <small>CHAT EN VIVO</small>
                 <ul id="mensajes-chat"></ul>
             </div>
-            <div style="height: 50%; border-top: 2px solid #f1f5f9; padding-top: 10px;">
-                <small>VOTOS RECIENTES 🗳️</small>
+            <div style="height: 50%; overflow-y: auto; padding-top: 10px;">
+                <small>HISTORIAL DE VOTOS 🗳️</small>
                 <ul id="feed-votos"></ul>
             </div>
         </div>
         
         <div class="input-group">
-            <input type="text" id="user" placeholder="Usuario" value="Fabian_Torres">
-            <input type="text" id="msg" placeholder="Enviar mensaje...">
-            <button onclick="enviarChat()">Enviar</button>
+            <input type="text" id="user" placeholder="Tu nombre" value="Fabian_Torres">
+            <input type="text" id="msg" placeholder="Escribe un mensaje..." autocomplete="off">
+            <button onclick="enviarChat()">Enviar Mensaje</button>
         </div>
     </div>
 
     <div class="main-content">
         <div class="card">
-            <h3>📊 Conteo de Votos en Tiempo Real</h3>
-            <canvas id="miGrafica" style="max-height: 400px;"></canvas>
+            <h3>📊 Resultados en Tiempo Real</h3>
+            <canvas id="miGrafica" style="max-height: 450px;"></canvas>
         </div>
     </div>
 
@@ -63,10 +52,10 @@
         const chart = new Chart(ctx, {
             type: 'bar',
             data: { labels: [], datasets: [{ 
-                label: 'Total Votos', 
+                label: 'Votos Acumulados', 
                 data: [], 
                 backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                borderRadius: 8
+                borderRadius: 5
             }] },
             options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
         });
@@ -76,25 +65,20 @@
         socket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             
-            // --- 1. CARGA INICIAL (Votos anteriores) ---
             if (data.tipo === 'estado_inicial') {
-                // Actualizamos la gráfica con los totales históricos
                 chart.data.labels = Object.keys(data.conteo);
                 chart.data.datasets[0].data = Object.values(data.conteo);
                 chart.update();
 
-                // Llenamos el feed con quién votó por quién
                 const feed = document.getElementById('feed-votos');
-                feed.innerHTML = ''; // Limpiamos para evitar duplicados
                 data.historial.forEach(v => {
                     const li = document.createElement('li');
                     li.className = 'voto-item';
                     li.innerHTML = `✅ <b>${v.usuario}</b> votó por <i>${v.candidato}</i>`;
-                    feed.prepend(li); // El historial aparece en el orden correcto
+                    feed.prepend(li);
                 });
             }
 
-            // --- 2. VOTOS NUEVOS EN TIEMPO REAL ---
             if (data.tipo === 'nuevo_voto') {
                 chart.data.labels = Object.keys(data.conteo);
                 chart.data.datasets[0].data = Object.values(data.conteo);
@@ -103,12 +87,11 @@
                 if (data.detalle) {
                     const li = document.createElement('li');
                     li.className = 'voto-item';
-                    li.innerHTML = `🔥 <b>${data.detalle.usuario}</b> acaba de votar por <i>${data.detalle.candidato}</i>`;
+                    li.innerHTML = `🔥 <b>${data.detalle.usuario}</b> votó por <b>${data.detalle.candidato}</b>`;
                     document.getElementById('feed-votos').prepend(li);
                 }
             }
 
-            // --- 3. CHAT ---
             if (data.tipo === 'chat') {
                 const li = document.createElement('li');
                 li.className = 'voto-item';
@@ -120,11 +103,16 @@
         function enviarChat() {
             const user = document.getElementById('user').value;
             const msgInput = document.getElementById('msg');
-            if (msgInput.value) {
+            if (msgInput.value.trim()) {
                 socket.send(JSON.stringify({ 'usuario': user, 'mensaje': msgInput.value }));
                 msgInput.value = '';
             }
         }
+
+        // Enviar con Enter
+        document.getElementById('msg').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarChat();
+        });
     </script>
 </body>
 </html>

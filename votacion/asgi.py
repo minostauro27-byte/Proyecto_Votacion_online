@@ -8,28 +8,27 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
 """
 
 import os
-
-from django.core.asgi import get_asgi_application
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'votacion.settings')
-
-#Permitir peticiones http
-
-django_asgi_app = get_asgi_application()
-
-#Permitir canales y websockets
-
-import os
+import django
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
 from django.urls import path
+
+# 1. Configurar el entorno de Django ANTES de importar los consumers
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'votacion.settings')
+django.setup()
+
+# Importar el consumer después de django.setup() para evitar errores de carga
 from votaciones.consumers import ChatVotacionConsumer
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'votacion.settings')
-
 application = ProtocolTypeRouter({
+    # Manejo de peticiones HTTP normales
     "http": get_asgi_application(),
-    "websocket": URLRouter([
-        path("ws/chat/", ChatVotacionConsumer.as_asgi()),
-    ]),
+    
+    # Manejo de WebSockets con soporte para autenticación
+    "websocket": AuthMiddlewareStack(
+        URLRouter([
+            path("ws/chat/", ChatVotacionConsumer.as_asgi()),
+        ])
+    ),
 })
