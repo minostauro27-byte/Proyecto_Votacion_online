@@ -1,65 +1,115 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard Electoral ADSO - Fabian Torres</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% extends 'base.html' %}
+
+    {% block content %}
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
-        .sidebar { width: 350px; background: var(--card); border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
-        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .card { background: var(--card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
-        #feed-votos, #mensajes-chat { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; font-size: 0.9em; }
+        .dashboard-container { display: flex; height: calc(100vh - 100px); margin-top: 10px; gap: 20px; }
+        .sidebar { width: 350px; background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; }
+        .main-content { flex-grow: 1; overflow-y: auto; }
+        .card-stats { background: var(--card); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; }
+        #feed-votos, #mensajes-chat { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; font-size: 0.85em; }
         .voto-item { padding: 8px; border-bottom: 1px solid #f1f5f9; animation: slideIn 0.3s ease; }
-        .input-group { padding: 20px; border-top: 1px solid #e2e8f0; background: #fff; }
-        input { width: 90%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 8px; }
-        button { background: var(--primary); color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .input-group-chat { padding: 15px; border-top: 1px solid #e2e8f0; background: #fff; }
+        .chat-input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 8px; }
+        .btn-chat { background: var(--primary); color: white; border: none; padding: 8px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; } }
     </style>
-</head>
-<body>
 
-    <div class="sidebar">
-        <div style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
-            <h3>💬 Panel de Control</h3>
-            <div style="height: 50%; overflow-y: auto; border-bottom: 2px solid #eee;">
-                <small>CHAT EN VIVO</small>
-                <ul id="mensajes-chat"></ul>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div style="padding: 15px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <h3 class="text-lg font-bold mb-2">💬 Panel de Control</h3>
+                <div style="height: 50%; overflow-y: auto; border-bottom: 2px solid #eee;">
+                    <small class="text-blue-600 font-bold uppercase tracking-wider">Chat en Vivo</small>
+                    <ul id="mensajes-chat"></ul>
+                </div>
+                <div style="height: 50%; overflow-y: auto; padding-top: 10px;">
+                    <small class="text-green-600 font-bold uppercase tracking-wider">Historial de Votos 🗳️</small>
+                    <ul id="feed-votos"></ul>
+                </div>
             </div>
-            <div style="height: 50%; overflow-y: auto; padding-top: 10px;">
-                <small>HISTORIAL DE VOTOS 🗳️</small>
-                <ul id="feed-votos"></ul>
+            
+            <div class="input-group-chat">
+                <input type="text" id="user" class="chat-input" placeholder="Nombre" value="Fabian_Torres">
+                <input type="text" id="msg" class="chat-input" placeholder="Escribe un mensaje..." autocomplete="off">
+                <button onclick="enviarChat()">Enviar Mensaje</button>
             </div>
         </div>
-        
-        <div class="input-group">
-            <input type="text" id="user" placeholder="Tu nombre" value="Fabian_Torres">
-            <input type="text" id="msg" placeholder="Escribe un mensaje..." autocomplete="off">
-            <button onclick="enviarChat()">Enviar Mensaje</button>
+
+        <div class="main-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="card-stats" style="border-top: 4px solid #10b981; text-align: center;">
+                    <small class="text-gray-500 block uppercase">Verificados</small>
+                    <h2 id="stat-verificados" class="text-2xl font-bold">0</h2>
+                </div>
+                <div class="card-stats" style="border-top: 4px solid #f59e0b; text-align: center;">
+                    <small class="text-gray-500 block uppercase">En Revisión</small>
+                    <h2 id="stat-revision" class="text-2xl font-bold">0</h2>
+                </div>
+                <div class="card-stats" style="border-top: 4px solid #2563eb; text-align: center;">
+                    <small class="text-gray-500 block uppercase">Progreso</small>
+                    <h2 id="stat-porcentaje" class="text-2xl font-bold">0%</h2>
+                </div>
+            </div>
+
+            <div class="card-stats">
+                <h3 class="font-bold mb-4">📊 Resultados en Tiempo Real</h3>
+                <canvas id="miGrafica" style="max-height: 400px;"></canvas>
+            </div>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="card">
-            <h3>📊 Resultados en Tiempo Real</h3>
-            <canvas id="miGrafica" style="max-height: 450px;"></canvas>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // 1. Inicializar Gráfica Globalmente
         const ctx = document.getElementById('miGrafica').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: [], datasets: [{ 
-                label: 'Votos Acumulados', 
-                data: [], 
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                borderRadius: 5
-            }] },
-            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            data: { labels: [], datasets: [{ label: 'Votos', data: [], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'], borderRadius: 5 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
 
+        // 2. Función de actualización con manejo de errores
+        async function actualizarTarjetas() {
+            try {
+                // Asegúrate de que la URL sea EXACTA a la de urls.py
+                const response = await fetch('/api/votos/estadisticas/', { 
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + (await firebase.auth().currentUser.getIdToken()),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 1. Pintar la gráfica con TODO el histórico
+                    chart.data.labels = Object.keys(data.conteo_candidatos);
+                    chart.data.datasets[0].data = Object.values(data.conteo_candidatos);
+                    chart.update();
+
+                    // 2. Pintar los votos anteriores en el Panel de Control
+                    const feed = document.getElementById('feed-votos'); // El ID de tu lista de historial
+                    feed.innerHTML = ''; // Limpiamos para no duplicar
+                    
+                    data.historial_inicial.forEach(voto => {
+                        const li = document.createElement('li');
+                        li.className = 'voto-item text-sm border-b p-1';
+                        li.innerHTML = `✅ <b>${voto.usuario}</b> votó por <i>${voto.candidato}</i>`;
+                        feed.appendChild(li);
+                    });
+
+                    // 3. Actualizar tarjetas superiores
+                    document.getElementById('stat-verificados').innerText = data.votos_verificados;
+                    document.getElementById('stat-porcentaje').innerText = data.porcentaje + '%';
+                }
+            } catch (error) {
+                console.error("Error al recuperar históricos:", error);
+            }
+        }
+
+        // 3. WebSocket
         const socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
 
         socket.onmessage = function(e) {
@@ -113,6 +163,18 @@
         document.getElementById('msg').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') enviarChat();
         });
+
+        // 4. Disparadores
+        window.onload = () => {
+            // Eliminamos la llamada inmediata para evitar el 403 prematuro
+            if (typeof firebase !== 'undefined') {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log("Firebase Autenticado correctamente");
+                        actualizarTarjetas(); // Solo se llama cuando ya hay token
+                    }
+                });
+            }
+        };
     </script>
-</body>
-</html>
+    {% endblock %}

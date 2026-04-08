@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-center mt-10">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border-t-4 border-green-600">
+        <h3 class="font-bold text-2xl mb-6 text-center text-gray-800" id="form-title">Registrar Mi Voto</h3>
+        
+        <input type="hidden" id="voto-id">
+        
+        <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona tu Candidato:</label>
+        <select id="candidato" class="w-full p-3 border border-gray-300 rounded-md mb-6 focus:ring-2 focus:ring-green-500 focus:outline-none">
+            <option value="ID-FIC">Candidato FIC</option>
+            <option value="ID-ROD">Candidato ROD</option>
+            <option value="CAND-001">Candidato 001</option>
+            <option value="ID-GUS">Candidato GUS</option>
+        </select>   
+
+        <button onclick="guardarVoto()" id="btn-enviar" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition duration-200">
+            Enviar Voto
+        </button>
+    </div>
+</div>
+
+<script>
+    const API_URL = '/api/votos/';
+
+    async function guardarVoto() {
+        const id = document.getElementById('voto-id').value;
+        const cand = document.getElementById('candidato').value;
+        const btn = document.getElementById('btn-enviar');
+
+        // Bloqueamos el botón para evitar doble envío
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        try {
+            // Obtenemos el token directamente de Firebase o localStorage según tu configuración
+            const token = localStorage.getItem('fb_token'); 
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ 
+                    candidato_id: cand,
+                    estado: 'Verificado'
+                })
+            });
+
+            if (response.ok) {
+                // Mensaje de éxito solicitado
+                alert("¡Voto exitoso!");
+            } else {
+                alert("Hubo un error al procesar tu voto.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error de conexión con el servidor.");
+        } finally {
+            // Restauramos el botón
+            btn.disabled = false;
+            btn.innerText = "Enviar Voto";
+        }
+    }
+</script>
+{% endblock %}

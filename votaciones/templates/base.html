@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Votación ADSO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4 shadow-lg mb-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-xl font-bold">🗳️ Votación ADSO</a>
+            <div id="nav-links" class="space-x-4">
+                <a href="/api/votos/votar/" class="hover:underline">Votar</a>
+                <a href="/api/monitor/" class="hover:underline">Monitor</a>
+                <button onclick="cerrarSesion()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Salir</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXVO23oNrZ1aQDUPfTxC8_ZIvTSW3dfgU",
+            authDomain: "votaciones-65b39.firebaseapp.com",
+            projectId: "votaciones-65b39",
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        function cerrarSesion() {
+            firebase.auth().signOut().then(() => {
+                localStorage.removeItem('fb_token');
+                window.location.href = '/api/login/';
+            });
+        }
+        function abrirModal() {
+            document.getElementById('modal-perfil').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-perfil').classList.add('hidden');
+        }
+
+        async function subirFoto() {
+            const fileInput = document.getElementById('input-foto');
+            if (fileInput.files.length === 0) return alert("Selecciona una imagen");
+
+            const formData = new FormData();
+            formData.append('imagen', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/votos/perfil/imagen/', { // Ajusta a tu URL de urls.py
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('fb_token')
+                    },
+                    body: formData
+                });
+
+                const resData = await response.json();
+                if (response.ok) {
+                    alert("¡Foto actualizada!");
+                    location.reload(); // Para ver los cambios
+                } else {
+                    alert("Error: " + resData.error);
+                }
+            } catch (error) {
+                console.error("Error al subir:", error);
+            }
+        }
+    </script>
+    <div id="modal-perfil" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg max-w-sm w-full">
+        <h3 class="text-xl font-bold mb-4">Actualizar Foto de Perfil</h3>
+        <input type="file" id="input-foto" accept="image/*" class="mb-4 w-full">
+        <div class="flex justify-end space-x-2">
+            <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
+            <button onclick="subirFoto()" class="px-4 py-2 bg-blue-600 text-white rounded">Subir</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

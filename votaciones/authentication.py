@@ -45,3 +45,15 @@ class FirebaseAuthentication(BaseAuthentication):
         
         except Exception as e:
             raise AuthenticationFailed(f"El token no es valido o esta expirado: {str(e)}")
+
+class FirebaseUser:
+    def __init__(self, uid, email, rol, nombre=None):
+        self.uid = uid
+        self.email = email
+        self.rol = rol
+        self.nombre = nombre or email.split('@')[0] # Usa el email como nombre si no hay otro
+        self.is_authenticated = True
+
+    # Añade esto para que Django no se queje al intentar guardar logs
+    def __str__(self):
+        return self.email
